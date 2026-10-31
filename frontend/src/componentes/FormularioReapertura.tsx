@@ -46,7 +46,7 @@ export function FormularioReapertura({ expediente, alCancelar, alReabrir }: Prop
     <form
       noValidate
       onSubmit={handleSubmit(enviar)}
-      className="space-y-4 rounded-md border border-slate-200 bg-slate-50 p-4"
+      className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/70 p-4"
     >
       <p className="text-sm text-slate-700">
         El expediente pasará de Cerrado a En seguimiento. Se conservan sus datos, actividades y cierres
@@ -65,7 +65,7 @@ export function FormularioReapertura({ expediente, alCancelar, alReabrir }: Prop
       </Campo>
 
       {errors.root?.servidor ? (
-        <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
           {errors.root.servidor.message}
         </p>
       ) : null}

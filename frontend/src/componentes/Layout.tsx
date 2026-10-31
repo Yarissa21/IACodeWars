@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { useCerrarSesion } from '../hooks/useAuth'
+import { iniciales } from '../lib/texto'
 import { useSesion } from '../store/sesion'
 import { Icono, type NombreIcono } from './Icono'
 import { Logo } from './Logo'
@@ -16,13 +17,6 @@ const ENLACES: Enlace[] = [
   { ruta: '/expedientes', texto: 'Expedientes', icono: 'carpeta' },
   { ruta: '/expedientes/nuevo', texto: 'Abrir expediente', icono: 'mas' },
 ]
-
-function iniciales(nombre: string): string {
-  const partes = nombre.split(' ').filter((parte) => parte !== '')
-  const primera = partes[0]?.[0] ?? ''
-  const segunda = partes.length > 1 ? (partes[partes.length - 1]?.[0] ?? '') : ''
-  return `${primera}${segunda}`.toUpperCase()
-}
 
 function claseEnlace({ isActive }: { isActive: boolean }): string {
   return `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
@@ -153,12 +147,6 @@ export function Layout() {
       ) : null}
 
       <div className="lg:pl-68">
-        <div role="note" className="border-b border-amber-200 bg-amber-50">
-          <p className="mx-auto max-w-6xl px-4 py-2 text-sm text-amber-900 sm:px-6 lg:px-10">
-            <strong className="font-semibold">Aviso:</strong> todos los datos son ficticios y se usan con fines
-            académicos. Esta aplicación no ofrece asesoría jurídica.
-          </p>
-        </div>
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
           <Outlet />
         </main>

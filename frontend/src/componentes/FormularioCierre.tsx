@@ -60,7 +60,7 @@ export function FormularioCierre({ expediente, alCancelar, alCerrar }: Propiedad
     <form
       noValidate
       onSubmit={handleSubmit(enviar, marcarSinActividades)}
-      className="space-y-4 rounded-md border border-slate-200 bg-slate-50 p-4"
+      className="space-y-4 rounded-lg border border-slate-200 bg-slate-50/70 p-4"
     >
       <p className="text-sm text-slate-700">
         Para cerrar se necesita al menos una actividad registrada y un motivo de cierre. Se guardarán la
@@ -79,13 +79,13 @@ export function FormularioCierre({ expediente, alCancelar, alCerrar }: Propiedad
       </Campo>
 
       {errors.root?.actividades ? (
-        <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
           {errors.root.actividades.message}
         </p>
       ) : null}
 
       {errors.root?.servidor ? (
-        <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+        <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
           {errors.root.servidor.message}
         </p>
       ) : null}

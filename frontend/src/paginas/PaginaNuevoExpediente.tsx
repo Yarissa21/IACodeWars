@@ -1,9 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { Boton } from '../componentes/Boton'
 import { Campo, estiloControl } from '../componentes/Campo'
+import { EncabezadoPagina } from '../componentes/EncabezadoPagina'
+import { Icono } from '../componentes/Icono'
 import {
   esquemaApertura,
   type DatosFormularioApertura,
@@ -43,17 +45,25 @@ export function PaginaNuevoExpediente() {
   }
 
   return (
-    <section className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold text-slate-900">Abrir expediente</h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Solicitante, descripción y responsable son obligatorios y no pueden quedar vacíos ni con
-        solo espacios. El expediente se abre en estado Abierto.
-      </p>
+    <section className="mx-auto max-w-3xl">
+      <EncabezadoPagina
+        superior={
+          <Link
+            to="/expedientes"
+            className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-marca-800"
+          >
+            <Icono nombre="flechaIzquierda" className="size-4" />
+            Expedientes
+          </Link>
+        }
+        titulo="Abrir expediente"
+        descripcion="Solicitante, descripción y responsable son obligatorios y no pueden quedar vacíos ni con solo espacios. El expediente se abre en estado Abierto."
+      />
 
       <form
         noValidate
         onSubmit={handleSubmit(enviar)}
-        className="mt-6 space-y-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+        className="space-y-6 rounded-xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:p-8"
       >
         <Campo id="solicitante" etiqueta="Solicitante (nombre o alias)" error={errors.solicitante?.message}>
           <input
@@ -105,12 +115,15 @@ export function PaginaNuevoExpediente() {
         </div>
 
         {errors.root?.servidor ? (
-          <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-800">
+          <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
             {errors.root.servidor.message}
           </p>
         ) : null}
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-6">
+          <Boton variante="secundario" onClick={() => void navegar('/expedientes')}>
+            Cancelar
+          </Boton>
           <Boton type="submit" cargando={abrir.isPending}>
             Abrir expediente
           </Boton>
