@@ -2,8 +2,6 @@
 
 Aplicación web para organizar los expedientes de un bufete popular ficticio que brinda asesoría gratuita.
 
-> **Aviso:** todos los datos son ficticios. Esta aplicación no ofrece asesoría jurídica.
-
 ## Ficha de análisis
 
 ### Problema
@@ -68,10 +66,10 @@ Los cierres se guardan en su propia tabla `cierres` (id, número de expediente, 
 
 ### Responsabilidades de los integrantes
 
-| Integrante | Responsabilidad |
-| --- | --- |
-| _Por definir_ | _Por definir_ |
-| _Por definir_ | _Por definir_ |
+| Integrantes |
+| --- |
+| Anthony Obed Ortíz Ochoa | 
+| Yarissa Alexandra Hernández Mijangos |
 
 ### Integración de aportes
 
