@@ -12,7 +12,7 @@ El bufete atiende a muchas personas y lleva el control de sus casos de forma dis
 
 ### Usuario
 
-Personal del bufete (abogados voluntarios, estudiantes practicantes y personal de apoyo) que registra y da seguimiento a los casos. No hay roles ni inicio de sesión: quien usa la app indica su nombre como responsable activo.
+Personal del bufete (abogados voluntarios, estudiantes practicantes y personal de apoyo) que registra y da seguimiento a los casos. Cada persona crea su cuenta con nombre y contraseña e inicia sesión; no hay roles, todas las cuentas tienen los mismos permisos.
 
 ### Prioridades
 
@@ -34,7 +34,8 @@ Personal del bufete (abogados voluntarios, estudiantes practicantes y personal d
 | Estado | Abierto, En seguimiento o Cerrado |
 | Apertura | Fecha y hora automáticas |
 | Cierres | Lista de todos los cierres, cada uno con fecha, hora y motivo |
-| Historial | Entradas de apertura, actividad o cambio de estado (las de cierre y reapertura incluyen su motivo) |
+| Historial | Entradas de apertura, actividad o cambio de estado, cada una con fecha, hora y el nombre de quien la realizó (las de cierre y reapertura incluyen su motivo) |
+| Usuarios | Cuentas con nombre único y contraseña guardada con hash (scrypt) |
 
 Cada actividad tiene descripción obligatoria, tipo opcional y fecha y hora automáticas.
 
@@ -59,8 +60,9 @@ Los cierres se guardan en su propia tabla `cierres` (id, número de expediente, 
 
 - Los expedientes, sus cierres y su historial se guardan en PostgreSQL a través de una API propia (`backend/`); todos los usuarios que usen la misma API ven los mismos datos.
 - Las reglas de negocio se validan en el servidor, no solo en la interfaz.
-- El nombre del responsable activo se recuerda en una cookie del navegador durante 7 días y solo sirve para precargar el campo Responsable al abrir un expediente.
-- No hay inicio de sesión, roles ni rutas protegidas.
+- Para usar la aplicación hay que iniciar sesión. La sesión dura 7 días y se guarda en una cookie `HttpOnly` (`SameSite=Lax`); la API rechaza con 401 cualquier consulta o acción sobre expedientes sin sesión.
+- Cada acción del historial guarda el nombre de la cuenta que la realizó. Las entradas creadas antes de agregar las cuentas aparecen como «Autor no registrado».
+- El nombre de la cuenta precarga el campo Responsable al abrir un expediente, pero se puede cambiar si el caso lo atiende otra persona.
 - Los datos que se ingresen son ficticios y no se usan para dar asesoría real.
 - Para cerrar de nuevo un expediente reabierto basta con que exista al menos una actividad en el expediente; no tiene que ser posterior a la reapertura.
 
@@ -134,7 +136,6 @@ La API queda en `http://localhost:3000`. Para comprobar la conexión abre `http:
 | `npm run build` / `npm start` | Genera `dist/` y la ejecuta |
 | `npm run typecheck` | Revisión de tipos con TypeScript |
 | `npm run db:push` | Aplica el esquema de Drizzle en la base de datos |
-| `npm test` | Pruebas con Vitest |
 
 ### 2. Frontend (segunda terminal)
 
@@ -148,19 +149,16 @@ npm run dev
 
 Abre la dirección que muestra Vite (normalmente `http://localhost:5173`). Vite redirige las peticiones a `/api` hacia `http://localhost:3000`. Para la versión de producción: `npm run build` y `npm run preview`.
 
-### 3. Pruebas
-
-```bash
-cd backend
-npm test
-```
-
-Ejecuta con Vitest las pruebas de las reglas de dominio en `backend/src/domain` (apertura, búsqueda, actividades, seguimiento, cierre y reapertura).
+La primera vez, entra a «Crear una cuenta», registra tu nombre y una contraseña de al menos 8 caracteres, y ya puedes trabajar con los expedientes.
 
 ### API
 
 | Método y ruta | Descripción |
 | --- | --- |
+| `POST /api/auth/registro` | Crea una cuenta (`nombre`, `contrasena`) e inicia sesión |
+| `POST /api/auth/ingreso` | Inicia sesión (`nombre`, `contrasena`) |
+| `POST /api/auth/salida` | Cierra la sesión |
+| `GET /api/auth/sesion` | Devuelve el usuario de la sesión activa |
 | `GET /api/expedientes?q=` | Listado; `q` filtra por identificador o nombre/alias |
 | `GET /api/expedientes/:codigo` | Detalle con `cierres` e `historial` en orden cronológico |
 | `POST /api/expedientes` | Abre un expediente (`solicitante`, `descripcion`, `responsable`, `categoria`) |
@@ -169,19 +167,19 @@ Ejecuta con Vitest las pruebas de las reglas de dominio en `backend/src/domain` 
 | `POST /api/expedientes/:codigo/cierre` | En seguimiento → Cerrado (`motivo`) |
 | `POST /api/expedientes/:codigo/reapertura` | Cerrado → En seguimiento (`motivo`) |
 
-Los errores se responden como `{"mensaje": "..."}` en español: 400 datos inválidos, 404 no existe, 409 acción no permitida en el estado actual, 503 sin conexión con la base de datos.
+Los errores se responden como `{"mensaje": "..."}` en español: 400 datos inválidos, 401 sin sesión o credenciales incorrectas, 404 no existe, 409 acción no permitida en el estado actual, 503 sin conexión con la base de datos.
 
 ## Decisiones con IA
 
 | Decisión o necesidad | Aporte de la IA | Decisión del equipo y razón | Cómo se comprobó |
 | --- | --- | --- | --- |
 | Persistencia de los expedientes | En la guía inicial, la IA planteó guardar los expedientes en `localStorage` mediante un adapter de Axios, suficiente para el alcance de una app sin backend. | Usar PostgreSQL con un backend en Hono y Drizzle ORM, para tener persistencia real y que las reglas de negocio se validen en el servidor y no solo en la interfaz. | Recargando la página, reiniciando el backend y consultando las tablas `expedientes`, `historial` y `cierres`: los datos se conservaron. |
-| Reapertura (parte 2 del enunciado): pasar de Cerrado a En seguimiento sin perder los cierres anteriores. Cambia la regla inicial de que un expediente cerrado no admite cambios de estado y obliga a que el cierre no sea una columna que se sobrescribe. | La IA implementó una tabla `cierres` (una fila por cierre, que nunca se actualiza ni se borra), la función pura `reabrirExpediente` y la validación en el servidor dentro de una transacción con bloqueo de fila (`for update`). | Se aceptó porque conserva todos los cierres con su fecha y motivo y la regla no depende de la interfaz. No se reescribió el historial de Git: el último commit anterior al anuncio (antes de las 8:38 a. m. del 31 de octubre de 2026), `d2cf244c8b5c915499dfd48711f5cac701419fb1`, sigue en el repositorio y la adaptación está en commits nuevos. Supuesto: el nuevo cierre exige al menos una actividad en el expediente, no necesariamente posterior a la reapertura. | Con 24 pruebas de Vitest, con rechazos reales de la API (motivo vacío → 400, reabrir en Abierto o En seguimiento → 409) y con el recorrido 4 en el navegador, incluida la recarga y el reinicio del backend. |
-| Sesión del responsable activo | La IA implementó un storage propio para el `persist` de Zustand sobre `document.cookie`, con `SameSite=Lax`, `path=/` y 7 días de duración, en lugar de `sessionStorage`. | Se aceptó para que el responsable activo sobreviva al cerrar la pestaña, sin guardar en la cookie más que el nombre. | Se verificó que la cookie es persistente (expira 7 días después de guardarla, `SameSite=Lax`, `path=/`), que el nombre se conserva al recargar y que no se guarda nada en `sessionStorage` ni `localStorage`. No se probó cerrando y reabriendo el navegador completo. |
+| Reapertura (parte 2 del enunciado): pasar de Cerrado a En seguimiento sin perder los cierres anteriores. Cambia la regla inicial de que un expediente cerrado no admite cambios de estado y obliga a que el cierre no sea una columna que se sobrescribe. | La IA implementó una tabla `cierres` (una fila por cierre, que nunca se actualiza ni se borra), la función pura `reabrirExpediente` y la validación en el servidor dentro de una transacción con bloqueo de fila (`for update`). | Se aceptó porque conserva todos los cierres con su fecha y motivo y la regla no depende de la interfaz. No se reescribió el historial de Git: el último commit anterior al anuncio (antes de las 8:38 a. m. del 31 de octubre de 2026), `d2cf244c8b5c915499dfd48711f5cac701419fb1`, sigue en el repositorio y la adaptación está en commits nuevos. Supuesto: el nuevo cierre exige al menos una actividad en el expediente, no necesariamente posterior a la reapertura. | Con 24 pruebas de Vitest (retiradas después a pedido del equipo), con rechazos reales de la API (motivo vacío → 400, reabrir en Abierto o En seguimiento → 409) y con el recorrido 4 en el navegador, incluida la recarga y el reinicio del backend. |
+| Sesión y cuentas de usuario | Primero, la IA implementó un storage propio para el `persist` de Zustand sobre `document.cookie` (`SameSite=Lax`, 7 días) para recordar el responsable activo. Al pedir el equipo cuentas con nombre y contraseña, implementó registro e inicio de sesión con contraseñas en hash scrypt, una tabla `sesiones` con el token guardado como hash y una cookie `HttpOnly` de 7 días, y un middleware que protege las rutas de expedientes. | Se aceptó para que cada acción del historial quede asociada a una cuenta real y para que la sesión sobreviva al cerrar la pestaña. El token no es accesible desde JavaScript; la cookie de Zustand solo guarda el nombre para mostrarlo. | Se verificó que la API responde 401 sin sesión, 409 con un nombre repetido y 401 con una contraseña incorrecta; que la cookie es `HttpOnly`, `SameSite=Lax` y dura 7 días; que al cerrar sesión las rutas redirigen al ingreso y que al volver a ingresar se regresa a la página pedida. No se probó cerrando y reabriendo el navegador completo. |
 
 ## Lista de comprobación
 
-Verificado en el navegador con el backend y la base de datos reales, sobre la versión final del código.
+Verificado en el navegador con el backend y la base de datos reales (ver la nota debajo de la tabla sobre qué se repitió después de agregar las cuentas).
 
 | Recorrido | Resultado | Observado |
 | --- | --- | --- |
@@ -190,18 +188,19 @@ Verificado en el navegador con el backend y la base de datos reales, sobre la ve
 | 3. Seguimiento y cierre | Cumple | El cierre sin actividad y con motivo vacío se rechazó indicando lo que faltaba; tras una actividad se cerró, desaparecieron el formulario de actividades y los botones, y la API rechazó actividad y seguimiento en Cerrado (409). |
 | 4. Reapertura y trazabilidad | Cumple | Se rechazó el motivo vacío (mensaje bajo el campo) y la reapertura en Abierto y En seguimiento (409 de la API, y el botón no aparece en esos estados); se reabrió, se agregó una actividad, se cerró de nuevo y el detalle mostró las 2 actividades, los 2 cierres y la reapertura. |
 | Conservación al recargar | Cumple | Después de recargar la página y de reiniciar el backend, EXP-0001 seguía Cerrado con 2 cierres, 2 actividades y 1 reapertura. |
+| Cuentas y autor en el historial | Cumple | Se creó una cuenta (la confirmación distinta se rechazó), se cerró sesión y las rutas protegidas redirigieron al ingreso; una contraseña incorrecta mostró «El nombre o la contraseña no son correctos.»; una actividad nueva apareció en el historial «por Lic. Ana Torres». |
 
-Los recorridos 1 a 3 se repitieron después de implementar la reapertura para detectar regresiones, sin encontrar fallos.
+Los recorridos 1 a 3 se repitieron después de implementar la reapertura para detectar regresiones, sin encontrar fallos. Los recorridos 1 a 4 se verificaron antes de agregar las cuentas; después de agregarlas se comprobaron la consulta, el detalle y el registro de actividades con sesión iniciada, pero no se repitieron completos los cuatro recorridos.
 
 ## Limitaciones conocidas
 
 - Requiere PostgreSQL instalado y en ejecución en la máquina local.
-- No hay autenticación ni roles: cualquier persona con acceso a la aplicación puede crear y modificar expedientes, y el responsable activo no se verifica.
+- No hay roles: todas las cuentas tienen los mismos permisos. Tampoco hay recuperación de contraseña ni límite de intentos de inicio de sesión.
 - No se pueden editar ni eliminar expedientes, actividades ni cierres.
 - El listado no tiene filtro por estado; solo búsqueda por identificador o nombre/alias.
 
 ## Recursos externos
 
 - Frontend: [React](https://react.dev), [Vite](https://vite.dev), [TypeScript](https://www.typescriptlang.org), [Tailwind CSS](https://tailwindcss.com), [React Router](https://reactrouter.com), [TanStack Query](https://tanstack.com/query), [Zustand](https://zustand.docs.pmnd.rs), [React Hook Form](https://react-hook-form.com), [Zod](https://zod.dev), [Axios](https://axios-http.com) y [react-hot-toast](https://react-hot-toast.com).
-- Backend: [Hono](https://hono.dev), [Drizzle ORM](https://orm.drizzle.team), [postgres.js](https://github.com/porsager/postgres), [PostgreSQL](https://www.postgresql.org) y [Vitest](https://vitest.dev).
+- Backend: [Hono](https://hono.dev), [Drizzle ORM](https://orm.drizzle.team), [postgres.js](https://github.com/porsager/postgres), [PostgreSQL](https://www.postgresql.org) y el módulo `node:crypto` de Node.js (scrypt) para las contraseñas.
 - [Claude Code](https://claude.com/claude-code) se usó como apoyo para generar código, pruebas y documentación; el equipo revisó y decidió cada cambio.
