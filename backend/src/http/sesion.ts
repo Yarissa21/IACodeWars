@@ -1,9 +1,9 @@
 import type { Context } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { createMiddleware } from 'hono/factory'
-import { ErrorDominio } from '../domain/errores'
-import type { UsuarioSesion } from '../domain/usuarios'
-import { DURACION_SESION_MS, type RepositorioUsuarios } from '../repositorio/usuarios'
+import { ErrorDominio } from '../domain/errores.js'
+import type { UsuarioSesion } from '../domain/usuarios.js'
+import { DURACION_SESION_MS, type RepositorioUsuarios } from '../repositorio/usuarios.js'
 
 export const NOMBRE_COOKIE_SESION = 'bufete_sesion'
 

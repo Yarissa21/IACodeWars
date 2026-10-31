@@ -5,11 +5,11 @@ import {
   esquemaCierre,
   esquemaReapertura,
   validar,
-} from '../domain/esquemas'
-import { buscarExpedientes, normalizarIdExpediente } from '../domain/expedientes'
-import type { RepositorioExpedientes } from '../repositorio/expedientes'
-import { leerCuerpo } from './cuerpo'
-import type { EntornoAutenticado } from './sesion'
+} from '../domain/esquemas.js'
+import { buscarExpedientes, normalizarIdExpediente } from '../domain/expedientes.js'
+import type { RepositorioExpedientes } from '../repositorio/expedientes.js'
+import { leerCuerpo } from './cuerpo.js'
+import type { EntornoAutenticado } from './sesion.js'
 
 function leerCodigo(c: Context): string {
   return normalizarIdExpediente(c.req.param('codigo') ?? '')

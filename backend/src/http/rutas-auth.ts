@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
-import { esquemaIngreso, esquemaRegistro } from '../domain/usuarios'
-import { validar } from '../domain/esquemas'
-import type { RepositorioUsuarios } from '../repositorio/usuarios'
-import { leerCuerpo } from './cuerpo'
-import { borrarCookieSesion, guardarCookieSesion, leerTokenSesion, requerirSesion } from './sesion'
+import { esquemaIngreso, esquemaRegistro } from '../domain/usuarios.js'
+import { validar } from '../domain/esquemas.js'
+import type { RepositorioUsuarios } from '../repositorio/usuarios.js'
+import { leerCuerpo } from './cuerpo.js'
+import { borrarCookieSesion, guardarCookieSesion, leerTokenSesion, requerirSesion } from './sesion.js'
 
 export function crearRutasAuth(repositorio: RepositorioUsuarios) {
   return new Hono()

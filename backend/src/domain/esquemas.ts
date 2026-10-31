@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { ErrorDominio } from './errores'
-import { CATEGORIAS } from './tipos'
+import { ErrorDominio } from './errores.js'
+import { CATEGORIAS } from './tipos.js'
 
 function textoObligatorio(mensajeVacio: string, nombreCampo: string, maximo: number) {
   return z

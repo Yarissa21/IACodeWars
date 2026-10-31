@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
-import { entorno } from '../config'
-import * as esquema from './esquema'
+import { entorno } from '../config.js'
+import * as esquema from './esquema.js'
 
 const enServerless = process.env.VERCEL === '1'
 

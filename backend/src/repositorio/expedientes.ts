@@ -1,13 +1,13 @@
 import { asc, eq, sql } from 'drizzle-orm'
-import type { BaseDeDatos } from '../db/conexion'
-import { cierres, expedientes, historial } from '../db/esquema'
-import { ErrorDominio } from '../domain/errores'
+import type { BaseDeDatos } from '../db/conexion.js'
+import { cierres, expedientes, historial } from '../db/esquema.js'
+import { ErrorDominio } from '../domain/errores.js'
 import type {
   DatosActividad,
   DatosApertura,
   DatosCierre,
   DatosReapertura,
-} from '../domain/esquemas'
+} from '../domain/esquemas.js'
 import {
   agregarActividad,
   cerrarExpediente,
@@ -15,7 +15,7 @@ import {
   pasarASeguimiento,
   reabrirExpediente,
   type ContextoAccion,
-} from '../domain/expedientes'
+} from '../domain/expedientes.js'
 import type {
   CambioExpediente,
   Cierre,
@@ -23,7 +23,7 @@ import type {
   EntradaHistorial,
   Expediente,
   ResumenExpediente,
-} from '../domain/tipos'
+} from '../domain/tipos.js'
 
 type Transaccion = Parameters<Parameters<BaseDeDatos['transaction']>[0]>[0]
 

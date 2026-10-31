@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server'
-import { entorno } from './config'
-import { cerrarConexion, verificarConexion } from './db/conexion'
-import app from './index'
+import { entorno } from './config.js'
+import { cerrarConexion, verificarConexion } from './db/conexion.js'
+import app from './index.js'
 
 try {
   await verificarConexion()

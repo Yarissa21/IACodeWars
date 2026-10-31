@@ -1,10 +1,10 @@
 import type { Hono } from 'hono'
-import { manejarError, manejarRutaInexistente } from './http/errores'
-import { crearRutasAuth } from './http/rutas-auth'
-import { crearRutasExpedientes } from './http/rutas-expedientes'
-import { requerirSesion } from './http/sesion'
-import type { RepositorioExpedientes } from './repositorio/expedientes'
-import type { RepositorioUsuarios } from './repositorio/usuarios'
+import { manejarError, manejarRutaInexistente } from './http/errores.js'
+import { crearRutasAuth } from './http/rutas-auth.js'
+import { crearRutasExpedientes } from './http/rutas-expedientes.js'
+import { requerirSesion } from './http/sesion.js'
+import type { RepositorioExpedientes } from './repositorio/expedientes.js'
+import type { RepositorioUsuarios } from './repositorio/usuarios.js'
 
 export interface DependenciasApp {
   repositorio: RepositorioExpedientes

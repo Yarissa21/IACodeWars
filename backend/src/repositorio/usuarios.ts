@@ -1,14 +1,14 @@
 import { and, eq, gt, lte } from 'drizzle-orm'
-import { generarHashContrasena, generarTokenSesion, hashToken, verificarContrasena } from '../auth/seguridad'
-import type { BaseDeDatos } from '../db/conexion'
-import { sesiones, usuarios } from '../db/esquema'
-import { ErrorDominio } from '../domain/errores'
+import { generarHashContrasena, generarTokenSesion, hashToken, verificarContrasena } from '../auth/seguridad.js'
+import type { BaseDeDatos } from '../db/conexion.js'
+import { sesiones, usuarios } from '../db/esquema.js'
+import { ErrorDominio } from '../domain/errores.js'
 import {
   normalizarNombreUsuario,
   type DatosIngreso,
   type DatosRegistro,
   type UsuarioSesion,
-} from '../domain/usuarios'
+} from '../domain/usuarios.js'
 
 export const DURACION_SESION_MS = 7 * 24 * 60 * 60 * 1000
 

@@ -1,5 +1,5 @@
 import type { Context } from 'hono'
-import { ErrorDominio } from '../domain/errores'
+import { ErrorDominio } from '../domain/errores.js'
 
 export async function leerCuerpo(c: Context): Promise<unknown> {
   try {

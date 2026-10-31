@@ -1,7 +1,7 @@
 import type { ErrorHandler, NotFoundHandler } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
-import { ErrorDominio, type TipoErrorDominio } from '../domain/errores'
+import { ErrorDominio, type TipoErrorDominio } from '../domain/errores.js'
 
 const ESTADOS_HTTP: Record<TipoErrorDominio, ContentfulStatusCode> = {
   validacion: 400,

@@ -1,5 +1,5 @@
-import type { DatosActividad, DatosApertura, DatosCierre, DatosReapertura } from './esquemas'
-import { ErrorDominio } from './errores'
+import type { DatosActividad, DatosApertura, DatosCierre, DatosReapertura } from './esquemas.js'
+import { ErrorDominio } from './errores.js'
 import {
   ETIQUETAS_ESTADO,
   type CambioExpediente,
@@ -7,7 +7,7 @@ import {
   type Expediente,
   type NuevaEntradaHistorial,
   type ResumenExpediente,
-} from './tipos'
+} from './tipos.js'
 
 export interface ContextoAccion {
   ahora: Date
