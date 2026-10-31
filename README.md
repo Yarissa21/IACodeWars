@@ -151,6 +151,20 @@ Abre la dirección que muestra Vite (normalmente `http://localhost:5173`). Vite 
 
 La primera vez, entra a «Crear una cuenta», registra tu nombre y una contraseña de al menos 8 caracteres, y ya puedes trabajar con los expedientes.
 
+### Despliegue en Vercel con Neon
+
+Se crean **dos proyectos** en Vercel desde el mismo repositorio:
+
+| Proyecto | Root Directory | Framework | Variables de entorno |
+| --- | --- | --- | --- |
+| API | `backend` | Hono (se detecta solo por `src/index.ts`) | `DATABASE_URL`: cadena de conexión de Neon con pooler (`...-pooler...neon.tech/neondb?sslmode=require`) |
+| Interfaz | `frontend` | Vite | `API_URL`: URL del proyecto de la API, por ejemplo `https://bufete-api.vercel.app` (sin `/` al final) |
+
+1. Crea las tablas en Neon una sola vez desde tu máquina: pon la cadena de Neon en `backend/.env` y ejecuta `npm run db:push` en `backend/`.
+2. Despliega primero la API y comprueba `https://TU-API.vercel.app/api/salud`.
+3. Despliega la interfaz con `API_URL` apuntando a la API. La función `frontend/api/[...ruta].ts` reenvía `/api/*` a la API, así la cookie de sesión queda en el dominio de la interfaz; `frontend/vercel.json` hace que las rutas de React Router funcionen al recargar.
+4. Si cambias una variable, vuelve a desplegar el proyecto para que la tome.
+
 ### API
 
 | Método y ruta | Descripción |
@@ -194,7 +208,7 @@ Los recorridos 1 a 3 se repitieron después de implementar la reapertura para de
 
 ## Limitaciones conocidas
 
-- Requiere PostgreSQL instalado y en ejecución en la máquina local.
+- Requiere una base PostgreSQL: local para desarrollo o Neon en el despliegue.
 - No hay roles: todas las cuentas tienen los mismos permisos. Tampoco hay recuperación de contraseña ni límite de intentos de inicio de sesión.
 - No se pueden editar ni eliminar expedientes, actividades ni cierres.
 - El listado no tiene filtro por estado; solo búsqueda por identificador o nombre/alias.

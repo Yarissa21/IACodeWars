@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import type { Hono } from 'hono'
 import { manejarError, manejarRutaInexistente } from './http/errores'
 import { crearRutasAuth } from './http/rutas-auth'
 import { crearRutasExpedientes } from './http/rutas-expedientes'
@@ -12,9 +12,7 @@ export interface DependenciasApp {
   verificarConexion: () => Promise<void>
 }
 
-export function crearApp({ repositorio, usuarios, verificarConexion }: DependenciasApp) {
-  const app = new Hono()
-
+export function configurarApp(app: Hono, { repositorio, usuarios, verificarConexion }: DependenciasApp): Hono {
   app.get('/api/salud', async (c) => {
     await verificarConexion()
     return c.json({ estado: 'ok', baseDeDatos: 'conectada' })
