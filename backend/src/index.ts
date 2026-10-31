@@ -1,13 +1,12 @@
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
+import { crearApp } from './app'
 import { entorno } from './config'
-import { cerrarConexion, verificarConexion } from './db/conexion'
+import { cerrarConexion, db, verificarConexion } from './db/conexion'
+import { crearRepositorioExpedientes } from './repositorio/expedientes'
 
-const app = new Hono()
-
-app.get('/api/salud', async (c) => {
-  await verificarConexion()
-  return c.json({ estado: 'ok', baseDeDatos: 'conectada' })
+const app = crearApp({
+  repositorio: crearRepositorioExpedientes(db),
+  verificarConexion,
 })
 
 try {
