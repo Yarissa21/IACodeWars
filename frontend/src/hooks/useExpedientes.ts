@@ -1,6 +1,13 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { abrirExpediente, listarExpedientes, obtenerExpediente } from '../api/expedientes'
-import type { Expediente } from '../tipos/expediente'
+import {
+  abrirExpediente,
+  cerrarExpediente,
+  listarExpedientes,
+  obtenerExpediente,
+  pasarASeguimiento,
+  registrarActividad,
+} from '../api/expedientes'
+import type { DatosActividad, DatosMotivo, Expediente } from '../tipos/expediente'
 
 export const clavesExpedientes = {
   todas: ['expedientes'] as const,
@@ -34,4 +41,25 @@ function useAlGuardar() {
 export function useAbrirExpediente() {
   const alGuardar = useAlGuardar()
   return useMutation({ mutationFn: abrirExpediente, onSuccess: alGuardar })
+}
+
+export function useRegistrarActividad(codigo: string) {
+  const alGuardar = useAlGuardar()
+  return useMutation({
+    mutationFn: (datos: DatosActividad) => registrarActividad(codigo, datos),
+    onSuccess: alGuardar,
+  })
+}
+
+export function usePasarASeguimiento(codigo: string) {
+  const alGuardar = useAlGuardar()
+  return useMutation({ mutationFn: () => pasarASeguimiento(codigo), onSuccess: alGuardar })
+}
+
+export function useCerrarExpediente(codigo: string) {
+  const alGuardar = useAlGuardar()
+  return useMutation({
+    mutationFn: (datos: DatosMotivo) => cerrarExpediente(codigo, datos),
+    onSuccess: alGuardar,
+  })
 }

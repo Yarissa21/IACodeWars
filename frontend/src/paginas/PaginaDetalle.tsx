@@ -1,7 +1,9 @@
 import { Link, useParams } from 'react-router'
+import { AccionesEstado } from '../componentes/AccionesEstado'
 import { Aviso } from '../componentes/Aviso'
 import { BadgeEstado } from '../componentes/BadgeEstado'
 import { Boton } from '../componentes/Boton'
+import { FormularioActividad } from '../componentes/FormularioActividad'
 import { Historial } from '../componentes/Historial'
 import { ListaCierres } from '../componentes/ListaCierres'
 import { Tarjeta } from '../componentes/Tarjeta'
@@ -93,17 +95,34 @@ export function PaginaDetalle() {
         </div>
       </div>
 
-      <Tarjeta titulo="Datos del expediente">
-        <DatosExpediente expediente={expediente} />
-      </Tarjeta>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Tarjeta titulo="Datos del expediente">
+            <DatosExpediente expediente={expediente} />
+          </Tarjeta>
 
-      <Tarjeta titulo="Cierres" descripcion="Del más antiguo al más reciente.">
-        <ListaCierres cierres={expediente.cierres} />
-      </Tarjeta>
+          <Tarjeta titulo="Cierres" descripcion="Del más antiguo al más reciente.">
+            <ListaCierres cierres={expediente.cierres} />
+          </Tarjeta>
 
-      <Tarjeta titulo="Historial" descripcion="En orden cronológico.">
-        <Historial entradas={expediente.historial} />
-      </Tarjeta>
+          <Tarjeta titulo="Historial" descripcion="En orden cronológico.">
+            <Historial entradas={expediente.historial} />
+          </Tarjeta>
+        </div>
+
+        <aside className="space-y-6">
+          {expediente.estado === 'cerrado' ? null : (
+            <>
+              <Tarjeta titulo="Estado">
+                <AccionesEstado key={expediente.estado} expediente={expediente} />
+              </Tarjeta>
+              <Tarjeta titulo="Registrar actividad" descripcion="La fecha y la hora se guardan automáticamente.">
+                <FormularioActividad codigo={expediente.id} />
+              </Tarjeta>
+            </>
+          )}
+        </aside>
+      </div>
     </div>
   )
 }

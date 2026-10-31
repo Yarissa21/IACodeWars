@@ -34,3 +34,33 @@ export const esquemaApertura = z.object({
 export type FormularioApertura = z.input<typeof esquemaApertura>
 
 export type DatosFormularioApertura = z.output<typeof esquemaApertura>
+
+export const esquemaActividad = z.object({
+  descripcion: textoObligatorio(
+    'Describe la actividad realizada; no puede quedar vacía ni con solo espacios.',
+    'La descripción de la actividad',
+    1000,
+  ),
+  tipo: z
+    .string()
+    .trim()
+    .max(60, 'El tipo de actividad no puede tener más de 60 caracteres.')
+    .transform((valor) => (valor === '' ? null : valor)),
+})
+
+export type FormularioActividad = z.input<typeof esquemaActividad>
+
+export type DatosFormularioActividad = z.output<typeof esquemaActividad>
+
+export function esquemaMotivo(mensajeVacio: string, nombreCampo: string) {
+  return z.object({ motivo: textoObligatorio(mensajeVacio, nombreCampo, 500) })
+}
+
+export const esquemaCierre = esquemaMotivo(
+  'Falta el motivo de cierre: explica por qué se cierra; no puede quedar vacío ni con solo espacios.',
+  'El motivo de cierre',
+)
+
+export type FormularioMotivo = z.input<typeof esquemaCierre>
+
+export type DatosFormularioMotivo = z.output<typeof esquemaCierre>

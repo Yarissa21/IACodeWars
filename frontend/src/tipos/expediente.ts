@@ -57,3 +57,16 @@ export interface DatosApertura {
   responsable: string
   categoria: Categoria | null
 }
+
+export interface DatosActividad {
+  descripcion: string
+  tipo: string | null
+}
+
+export interface DatosMotivo {
+  motivo: string
+}
+
+export function contarActividades(expediente: Expediente): number {
+  return expediente.historial.filter((entrada) => entrada.tipo === 'actividad').length
+}
