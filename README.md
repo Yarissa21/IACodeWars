@@ -162,7 +162,7 @@ Se crean **dos proyectos** en Vercel desde el mismo repositorio:
 
 1. Crea las tablas en Neon una sola vez desde tu máquina: pon la cadena de Neon en `backend/.env` y ejecuta `npm run db:push` en `backend/`.
 2. Despliega primero la API y comprueba `https://TU-API.vercel.app/api/salud`.
-3. Despliega la interfaz con `API_URL` apuntando a la API. La función `frontend/api/[...ruta].ts` reenvía `/api/*` a la API, así la cookie de sesión queda en el dominio de la interfaz; `frontend/vercel.json` hace que las rutas de React Router funcionen al recargar.
+3. Despliega la interfaz con `API_URL` apuntando a la API. La función `frontend/api/proxy.ts` (con la regla de `frontend/vercel.json`) reenvía `/api/*` a la API, así la cookie de sesión queda en el dominio de la interfaz; `frontend/vercel.json` hace que las rutas de React Router funcionen al recargar.
 4. Si cambias una variable, vuelve a desplegar el proyecto para que la tome.
 
 ### API

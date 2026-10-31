@@ -13,7 +13,9 @@ export default async function proxyApi(solicitud: Request): Promise<Response> {
   }
 
   const origen = new URL(solicitud.url)
-  const destino = new URL(`${origen.pathname}${origen.search}`, base)
+  const ruta = origen.searchParams.get('ruta') ?? ''
+  origen.searchParams.delete('ruta')
+  const destino = new URL(`/api/${ruta}${origen.search}`, base)
 
   const cabeceras = new Headers()
   solicitud.headers.forEach((valor, clave) => {
