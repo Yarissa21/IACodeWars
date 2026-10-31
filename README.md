@@ -85,7 +85,15 @@ Los cierres se guardan en su propia tabla `cierres` (id, número de expediente, 
 ### Requisitos
 
 - Node.js 22 o superior (probado con Node.js 24) y npm.
-- PostgreSQL 14 o superior en ejecución (probado con PostgreSQL 18), con una base de datos vacía llamada `bufete`.
+- PostgreSQL 14 o superior instalado y en ejecución (probado con PostgreSQL 18).
+
+### 0. Base de datos
+
+Con PostgreSQL en ejecución, crea la base de datos (por ejemplo desde `psql -U postgres` o pgAdmin):
+
+```sql
+CREATE DATABASE bufete;
+```
 
 ### Estructura
 
@@ -94,24 +102,26 @@ Los cierres se guardan en su propia tabla `cierres` (id, número de expediente, 
 | `frontend/` | Interfaz con React 19, TypeScript, Vite, Tailwind CSS 4, React Router, TanStack Query, Zustand, react-hook-form con Zod, Axios y react-hot-toast |
 | `backend/` | API con Hono, TypeScript, Drizzle ORM, postgres.js y Zod |
 
-### 1. Backend
+### 1. Backend (primera terminal)
+
+Copia `backend/.env.example` a `backend/.env`:
 
 ```bash
-cd backend
-npm install
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Edita `backend/.env` y pon en `DATABASE_URL` el usuario y la contraseña de tu PostgreSQL:
+Edita `backend/.env` y ajusta en `DATABASE_URL` la contraseña (y el usuario si no es `postgres`) de tu PostgreSQL:
 
 ```
 DATABASE_URL=postgresql://postgres:TU_CONTRASEÑA@localhost:5432/bufete
 PORT=3000
 ```
 
-Crea las tablas y arranca la API:
+Instala las dependencias, crea las tablas y arranca la API:
 
 ```bash
+cd backend
+npm install
 npm run db:push
 npm run dev
 ```
@@ -126,9 +136,9 @@ La API queda en `http://localhost:3000`. Para comprobar la conexión abre `http:
 | `npm run db:push` | Aplica el esquema de Drizzle en la base de datos |
 | `npm test` | Pruebas con Vitest |
 
-### 2. Frontend
+### 2. Frontend (segunda terminal)
 
-En otra terminal, con la API en ejecución:
+Con la API en ejecución:
 
 ```bash
 cd frontend
@@ -136,7 +146,16 @@ npm install
 npm run dev
 ```
 
-Abre `http://localhost:5173`. Vite redirige las peticiones a `/api` hacia `http://localhost:3000`. Para la versión de producción: `npm run build` y `npm run preview`.
+Abre la dirección que muestra Vite (normalmente `http://localhost:5173`). Vite redirige las peticiones a `/api` hacia `http://localhost:3000`. Para la versión de producción: `npm run build` y `npm run preview`.
+
+### 3. Pruebas
+
+```bash
+cd backend
+npm test
+```
+
+Ejecuta con Vitest las pruebas de las reglas de dominio en `backend/src/domain` (apertura, búsqueda, actividades, seguimiento, cierre y reapertura).
 
 ### API
 
@@ -154,13 +173,35 @@ Los errores se responden como `{"mensaje": "..."}` en español: 400 datos invál
 
 ## Decisiones con IA
 
+| Decisión o necesidad | Aporte de la IA | Decisión del equipo y razón | Cómo se comprobó |
+| --- | --- | --- | --- |
+| Persistencia de los expedientes | En la guía inicial, la IA planteó guardar los expedientes en `localStorage` mediante un adapter de Axios, suficiente para el alcance de una app sin backend. | Usar PostgreSQL con un backend en Hono y Drizzle ORM, para tener persistencia real y que las reglas de negocio se validen en el servidor y no solo en la interfaz. | Recargando la página, reiniciando el backend y consultando las tablas `expedientes`, `historial` y `cierres`: los datos se conservaron. |
+| Reapertura (parte 2 del enunciado): pasar de Cerrado a En seguimiento sin perder los cierres anteriores. Cambia la regla inicial de que un expediente cerrado no admite cambios de estado y obliga a que el cierre no sea una columna que se sobrescribe. | La IA implementó una tabla `cierres` (una fila por cierre, que nunca se actualiza ni se borra), la función pura `reabrirExpediente` y la validación en el servidor dentro de una transacción con bloqueo de fila (`for update`). | Se aceptó porque conserva todos los cierres con su fecha y motivo y la regla no depende de la interfaz. No se reescribió el historial de Git: el último commit anterior al anuncio (antes de las 8:38 a. m. del 31 de octubre de 2026), `d2cf244c8b5c915499dfd48711f5cac701419fb1`, sigue en el repositorio y la adaptación está en commits nuevos. Supuesto: el nuevo cierre exige al menos una actividad en el expediente, no necesariamente posterior a la reapertura. | Con 24 pruebas de Vitest, con rechazos reales de la API (motivo vacío → 400, reabrir en Abierto o En seguimiento → 409) y con el recorrido 4 en el navegador, incluida la recarga y el reinicio del backend. |
+| Sesión del responsable activo | La IA implementó un storage propio para el `persist` de Zustand sobre `document.cookie`, con `SameSite=Lax`, `path=/` y 7 días de duración, en lugar de `sessionStorage`. | Se aceptó para que el responsable activo sobreviva al cerrar la pestaña, sin guardar en la cookie más que el nombre. | Se verificó que la cookie es persistente (expira 7 días después de guardarla, `SameSite=Lax`, `path=/`), que el nombre se conserva al recargar y que no se guarda nada en `sessionStorage` ni `localStorage`. No se probó cerrando y reabriendo el navegador completo. |
+
 ## Lista de comprobación
+
+Verificado en el navegador con el backend y la base de datos reales, sobre la versión final del código.
+
+| Recorrido | Resultado | Observado |
+| --- | --- | --- |
+| 1. Apertura | Cumple | Se crearon EXP-0001 y EXP-0002; con descripción de solo espacios y responsable vacío se mostró un mensaje por campo y no se envió nada al servidor. |
+| 2. Consulta | Cumple | `exp-0002`, `dona chepa` y `ROSA` encontraron el expediente correcto, el detalle mostró datos e historial y «Pedro Inexistente» mostró el mensaje de búsqueda sin resultados. |
+| 3. Seguimiento y cierre | Cumple | El cierre sin actividad y con motivo vacío se rechazó indicando lo que faltaba; tras una actividad se cerró, desaparecieron el formulario de actividades y los botones, y la API rechazó actividad y seguimiento en Cerrado (409). |
+| 4. Reapertura y trazabilidad | Cumple | Se rechazó el motivo vacío (mensaje bajo el campo) y la reapertura en Abierto y En seguimiento (409 de la API, y el botón no aparece en esos estados); se reabrió, se agregó una actividad, se cerró de nuevo y el detalle mostró las 2 actividades, los 2 cierres y la reapertura. |
+| Conservación al recargar | Cumple | Después de recargar la página y de reiniciar el backend, EXP-0001 seguía Cerrado con 2 cierres, 2 actividades y 1 reapertura. |
+
+Los recorridos 1 a 3 se repitieron después de implementar la reapertura para detectar regresiones, sin encontrar fallos.
 
 ## Limitaciones conocidas
 
-- No hay inicio de sesión ni roles: cualquier persona con acceso a la aplicación puede crear y modificar expedientes, y el responsable activo no se verifica.
-- Todavía no hay pruebas automatizadas; `npm test` en `backend/` pasa sin pruebas.
-- La búsqueda filtra en el servidor después de leer todos los expedientes, pensada para el volumen de un bufete pequeño.
-- No se pueden editar ni borrar expedientes, actividades ni cierres desde la aplicación.
+- Requiere PostgreSQL instalado y en ejecución en la máquina local.
+- No hay autenticación ni roles: cualquier persona con acceso a la aplicación puede crear y modificar expedientes, y el responsable activo no se verifica.
+- No se pueden editar ni eliminar expedientes, actividades ni cierres.
+- El listado no tiene filtro por estado; solo búsqueda por identificador o nombre/alias.
 
 ## Recursos externos
+
+- Frontend: [React](https://react.dev), [Vite](https://vite.dev), [TypeScript](https://www.typescriptlang.org), [Tailwind CSS](https://tailwindcss.com), [React Router](https://reactrouter.com), [TanStack Query](https://tanstack.com/query), [Zustand](https://zustand.docs.pmnd.rs), [React Hook Form](https://react-hook-form.com), [Zod](https://zod.dev), [Axios](https://axios-http.com) y [react-hot-toast](https://react-hot-toast.com).
+- Backend: [Hono](https://hono.dev), [Drizzle ORM](https://orm.drizzle.team), [postgres.js](https://github.com/porsager/postgres), [PostgreSQL](https://www.postgresql.org) y [Vitest](https://vitest.dev).
+- [Claude Code](https://claude.com/claude-code) se usó como apoyo para generar código, pruebas y documentación; el equipo revisó y decidió cada cambio.
