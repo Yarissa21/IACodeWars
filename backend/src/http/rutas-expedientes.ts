@@ -1,6 +1,12 @@
 import { Hono, type Context } from 'hono'
 import { ErrorDominio } from '../domain/errores'
-import { esquemaActividad, esquemaApertura, esquemaCierre, validar } from '../domain/esquemas'
+import {
+  esquemaActividad,
+  esquemaApertura,
+  esquemaCierre,
+  esquemaReapertura,
+  validar,
+} from '../domain/esquemas'
 import { buscarExpedientes, normalizarIdExpediente } from '../domain/expedientes'
 import type { RepositorioExpedientes } from '../repositorio/expedientes'
 
@@ -12,8 +18,8 @@ async function leerCuerpo(c: Context): Promise<unknown> {
   }
 }
 
-function leerId(c: Context): string {
-  return normalizarIdExpediente(c.req.param('id') ?? '')
+function leerCodigo(c: Context): string {
+  return normalizarIdExpediente(c.req.param('codigo') ?? '')
 }
 
 export function crearRutasExpedientes(repositorio: RepositorioExpedientes) {
@@ -23,24 +29,29 @@ export function crearRutasExpedientes(repositorio: RepositorioExpedientes) {
       const resumenes = await repositorio.listar()
       return c.json(buscarExpedientes(resumenes, termino))
     })
-    .get('/:id', async (c) => {
-      return c.json(await repositorio.obtener(leerId(c)))
+    .get('/:codigo', async (c) => {
+      return c.json(await repositorio.obtener(leerCodigo(c)))
     })
     .post('/', async (c) => {
       const datos = validar(esquemaApertura, await leerCuerpo(c))
       return c.json(await repositorio.abrir(datos), 201)
     })
-    .post('/:id/actividades', async (c) => {
-      const id = leerId(c)
+    .post('/:codigo/actividades', async (c) => {
+      const codigo = leerCodigo(c)
       const datos = validar(esquemaActividad, await leerCuerpo(c))
-      return c.json(await repositorio.registrarActividad(id, datos), 201)
+      return c.json(await repositorio.registrarActividad(codigo, datos), 201)
     })
-    .post('/:id/seguimiento', async (c) => {
-      return c.json(await repositorio.pasarASeguimiento(leerId(c)))
+    .post('/:codigo/seguimiento', async (c) => {
+      return c.json(await repositorio.pasarASeguimiento(leerCodigo(c)))
     })
-    .post('/:id/cierre', async (c) => {
-      const id = leerId(c)
+    .post('/:codigo/cierre', async (c) => {
+      const codigo = leerCodigo(c)
       const datos = validar(esquemaCierre, await leerCuerpo(c))
-      return c.json(await repositorio.cerrar(id, datos))
+      return c.json(await repositorio.cerrar(codigo, datos))
+    })
+    .post('/:codigo/reapertura', async (c) => {
+      const codigo = leerCodigo(c)
+      const datos = validar(esquemaReapertura, await leerCuerpo(c))
+      return c.json(await repositorio.reabrir(codigo, datos))
     })
 }

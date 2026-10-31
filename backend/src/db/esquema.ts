@@ -1,4 +1,4 @@
-import { index, integer, pgEnum, pgSequence, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { index, integer, pgEnum, pgSequence, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const estadoExpediente = pgEnum('estado_expediente', ['abierto', 'en_seguimiento', 'cerrado'])
 
@@ -17,8 +17,6 @@ export const expedientes = pgTable('expedientes', {
   categoria: categoriaExpediente('categoria'),
   estado: estadoExpediente('estado').notNull().default('abierto'),
   abiertoEn: timestamp('abierto_en', { withTimezone: true, mode: 'date' }).notNull(),
-  cerradoEn: timestamp('cerrado_en', { withTimezone: true, mode: 'date' }),
-  motivoCierre: text('motivo_cierre'),
 })
 
 export const historial = pgTable(
@@ -33,7 +31,21 @@ export const historial = pgTable(
     tipoActividad: text('tipo_actividad'),
     estadoAnterior: estadoExpediente('estado_anterior'),
     estadoNuevo: estadoExpediente('estado_nuevo'),
+    motivo: text('motivo'),
     fecha: timestamp('fecha', { withTimezone: true, mode: 'date' }).notNull(),
   },
   (tabla) => [index('historial_expediente_fecha_idx').on(tabla.expedienteId, tabla.fecha)],
+)
+
+export const cierres = pgTable(
+  'cierres',
+  {
+    id: serial('id').primaryKey(),
+    expedienteNumero: integer('expediente_numero')
+      .notNull()
+      .references(() => expedientes.numero, { onDelete: 'cascade' }),
+    fecha: timestamp('fecha', { withTimezone: true, mode: 'date' }).notNull(),
+    motivo: text('motivo').notNull(),
+  },
+  (tabla) => [index('cierres_expediente_fecha_idx').on(tabla.expedienteNumero, tabla.fecha)],
 )

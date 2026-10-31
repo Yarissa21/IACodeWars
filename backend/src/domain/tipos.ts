@@ -23,10 +23,19 @@ export interface EntradaHistorial {
   tipoActividad: string | null
   estadoAnterior: Estado | null
   estadoNuevo: Estado | null
+  motivo: string | null
   fecha: Date
 }
 
 export type NuevaEntradaHistorial = Omit<EntradaHistorial, 'id'>
+
+export interface Cierre {
+  id: number
+  fecha: Date
+  motivo: string
+}
+
+export type NuevoCierre = Omit<Cierre, 'id'>
 
 export interface DatosExpediente {
   id: string
@@ -37,11 +46,10 @@ export interface DatosExpediente {
   categoria: Categoria | null
   estado: Estado
   abiertoEn: Date
-  cerradoEn: Date | null
-  motivoCierre: string | null
 }
 
 export interface Expediente extends DatosExpediente {
+  cierres: Cierre[]
   historial: EntradaHistorial[]
 }
 
@@ -53,4 +61,5 @@ export type ResumenExpediente = Pick<
 export interface CambioExpediente {
   expediente: DatosExpediente
   nuevasEntradas: NuevaEntradaHistorial[]
+  nuevoCierre: NuevoCierre | null
 }

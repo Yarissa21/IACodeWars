@@ -1,4 +1,4 @@
-import type { DatosActividad, DatosApertura, DatosCierre } from './esquemas'
+import type { DatosActividad, DatosApertura, DatosCierre, DatosReapertura } from './esquemas'
 import { ErrorDominio } from './errores'
 import {
   ETIQUETAS_ESTADO,
@@ -21,6 +21,7 @@ function entradaCambioEstado(
   anterior: Estado,
   nuevo: Estado,
   fecha: Date,
+  motivo: string | null,
   detalle?: string,
 ): NuevaEntradaHistorial {
   const base = `Estado cambiado de ${ETIQUETAS_ESTADO[anterior]} a ${ETIQUETAS_ESTADO[nuevo]}.`
@@ -30,16 +31,22 @@ function entradaCambioEstado(
     tipoActividad: null,
     estadoAnterior: anterior,
     estadoNuevo: nuevo,
+    motivo,
     fecha,
   }
 }
 
-function asegurarNoCerrado(expediente: Expediente, accion: string): void {
+function exigirMotivo(motivo: string, mensajeVacio: string): string {
+  const limpio = motivo.trim()
+  if (limpio === '') {
+    throw new ErrorDominio('validacion', mensajeVacio)
+  }
+  return limpio
+}
+
+function rechazarSiCerrado(expediente: Expediente, mensaje: string): void {
   if (expediente.estado === 'cerrado') {
-    throw new ErrorDominio(
-      'regla_negocio',
-      `El expediente ${expediente.id} está cerrado: solo se puede consultar y no admite ${accion}.`,
-    )
+    throw new ErrorDominio('regla_negocio', `El expediente ${expediente.id} está Cerrado: ${mensaje}`)
   }
 }
 
@@ -58,8 +65,6 @@ export function crearExpediente(datos: DatosApertura, numero: number, ahora: Dat
       categoria: datos.categoria,
       estado: 'abierto',
       abiertoEn: ahora,
-      cerradoEn: null,
-      motivoCierre: null,
     },
     nuevasEntradas: [
       {
@@ -68,9 +73,11 @@ export function crearExpediente(datos: DatosApertura, numero: number, ahora: Dat
         tipoActividad: null,
         estadoAnterior: null,
         estadoNuevo: 'abierto',
+        motivo: null,
         fecha: ahora,
       },
     ],
+    nuevoCierre: null,
   }
 }
 
@@ -79,7 +86,7 @@ export function agregarActividad(
   datos: DatosActividad,
   ahora: Date,
 ): CambioExpediente {
-  asegurarNoCerrado(expediente, 'nuevas actividades')
+  rechazarSiCerrado(expediente, 'no admite nuevas actividades. Reábrelo para registrar actividades.')
   return {
     expediente,
     nuevasEntradas: [
@@ -89,23 +96,23 @@ export function agregarActividad(
         tipoActividad: datos.tipo,
         estadoAnterior: null,
         estadoNuevo: null,
+        motivo: null,
         fecha: ahora,
       },
     ],
+    nuevoCierre: null,
   }
 }
 
 export function pasarASeguimiento(expediente: Expediente, ahora: Date): CambioExpediente {
-  asegurarNoCerrado(expediente, 'cambios de estado')
+  rechazarSiCerrado(expediente, 'la única acción permitida es reabrirlo.')
   if (expediente.estado !== 'abierto') {
-    throw new ErrorDominio(
-      'regla_negocio',
-      `El expediente ${expediente.id} ya está En seguimiento.`,
-    )
+    throw new ErrorDominio('regla_negocio', `El expediente ${expediente.id} ya está En seguimiento.`)
   }
   return {
     expediente: { ...expediente, estado: 'en_seguimiento' },
-    nuevasEntradas: [entradaCambioEstado('abierto', 'en_seguimiento', ahora)],
+    nuevasEntradas: [entradaCambioEstado('abierto', 'en_seguimiento', ahora, null)],
+    nuevoCierre: null,
   }
 }
 
@@ -114,7 +121,11 @@ export function cerrarExpediente(
   datos: DatosCierre,
   ahora: Date,
 ): CambioExpediente {
-  asegurarNoCerrado(expediente, 'cambios de estado')
+  const motivo = exigirMotivo(
+    datos.motivo,
+    'El motivo de cierre es obligatorio: explica por qué se cierra el expediente.',
+  )
+  rechazarSiCerrado(expediente, 'la única acción permitida es reabrirlo.')
   if (expediente.estado !== 'en_seguimiento') {
     throw new ErrorDominio(
       'regla_negocio',
@@ -128,15 +139,31 @@ export function cerrarExpediente(
     )
   }
   return {
-    expediente: {
-      ...expediente,
-      estado: 'cerrado',
-      cerradoEn: ahora,
-      motivoCierre: datos.motivo,
-    },
-    nuevasEntradas: [
-      entradaCambioEstado('en_seguimiento', 'cerrado', ahora, `Motivo: ${datos.motivo}`),
-    ],
+    expediente: { ...expediente, estado: 'cerrado' },
+    nuevasEntradas: [entradaCambioEstado('en_seguimiento', 'cerrado', ahora, motivo)],
+    nuevoCierre: { fecha: ahora, motivo },
+  }
+}
+
+export function reabrirExpediente(
+  expediente: Expediente,
+  datos: DatosReapertura,
+  ahora: Date,
+): CambioExpediente {
+  const motivo = exigirMotivo(
+    datos.motivo,
+    'El motivo de reapertura es obligatorio: explica por qué se reabre el expediente.',
+  )
+  if (expediente.estado !== 'cerrado') {
+    throw new ErrorDominio(
+      'regla_negocio',
+      `El expediente ${expediente.id} está ${ETIQUETAS_ESTADO[expediente.estado]}: solo se puede reabrir un expediente Cerrado.`,
+    )
+  }
+  return {
+    expediente: { ...expediente, estado: 'en_seguimiento' },
+    nuevasEntradas: [entradaCambioEstado('cerrado', 'en_seguimiento', ahora, motivo, 'Expediente reabierto.')],
+    nuevoCierre: null,
   }
 }
 

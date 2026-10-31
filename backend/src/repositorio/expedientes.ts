@@ -1,16 +1,23 @@
 import { asc, eq, sql } from 'drizzle-orm'
 import type { BaseDeDatos } from '../db/conexion'
-import { expedientes, historial } from '../db/esquema'
+import { cierres, expedientes, historial } from '../db/esquema'
 import { ErrorDominio } from '../domain/errores'
-import type { DatosActividad, DatosApertura, DatosCierre } from '../domain/esquemas'
+import type {
+  DatosActividad,
+  DatosApertura,
+  DatosCierre,
+  DatosReapertura,
+} from '../domain/esquemas'
 import {
   agregarActividad,
   cerrarExpediente,
   crearExpediente,
   pasarASeguimiento,
+  reabrirExpediente,
 } from '../domain/expedientes'
 import type {
   CambioExpediente,
+  Cierre,
   DatosExpediente,
   EntradaHistorial,
   Expediente,
@@ -32,6 +39,7 @@ async function leerHistorial(lector: Lector, expedienteId: string): Promise<Entr
       tipoActividad: historial.tipoActividad,
       estadoAnterior: historial.estadoAnterior,
       estadoNuevo: historial.estadoNuevo,
+      motivo: historial.motivo,
       fecha: historial.fecha,
     })
     .from(historial)
@@ -39,12 +47,25 @@ async function leerHistorial(lector: Lector, expedienteId: string): Promise<Entr
     .orderBy(asc(historial.fecha), asc(historial.id))
 }
 
+async function leerCierres(lector: Lector, numero: number): Promise<Cierre[]> {
+  return lector
+    .select({ id: cierres.id, fecha: cierres.fecha, motivo: cierres.motivo })
+    .from(cierres)
+    .where(eq(cierres.expedienteNumero, numero))
+    .orderBy(asc(cierres.fecha), asc(cierres.id))
+}
+
+async function completar(lector: Lector, datos: DatosExpediente): Promise<Expediente> {
+  const [listaCierres, entradas] = await Promise.all([
+    leerCierres(lector, datos.numero),
+    leerHistorial(lector, datos.id),
+  ])
+  return { ...datos, cierres: listaCierres, historial: entradas }
+}
+
 async function leerExpediente(lector: Lector, id: string): Promise<Expediente | null> {
   const [datos] = await lector.select().from(expedientes).where(eq(expedientes.id, id))
-  if (!datos) {
-    return null
-  }
-  return { ...datos, historial: await leerHistorial(lector, id) }
+  return datos ? completar(lector, datos) : null
 }
 
 async function bloquearExpediente(tx: Transaccion, id: string): Promise<Expediente> {
@@ -52,16 +73,18 @@ async function bloquearExpediente(tx: Transaccion, id: string): Promise<Expedien
   if (!datos) {
     throw new ErrorDominio('no_encontrado', `No existe el expediente ${id}.`)
   }
-  return { ...datos, historial: await leerHistorial(tx, id) }
+  return completar(tx, datos)
 }
 
-async function guardarEntradas(tx: Transaccion, cambio: CambioExpediente): Promise<void> {
-  if (cambio.nuevasEntradas.length === 0) {
-    return
+async function guardarCambio(tx: Transaccion, cambio: CambioExpediente): Promise<void> {
+  if (cambio.nuevasEntradas.length > 0) {
+    await tx
+      .insert(historial)
+      .values(cambio.nuevasEntradas.map((entrada) => ({ ...entrada, expedienteId: cambio.expediente.id })))
   }
-  await tx
-    .insert(historial)
-    .values(cambio.nuevasEntradas.map((entrada) => ({ ...entrada, expedienteId: cambio.expediente.id })))
+  if (cambio.nuevoCierre) {
+    await tx.insert(cierres).values({ ...cambio.nuevoCierre, expedienteNumero: cambio.expediente.numero })
+  }
 }
 
 async function releer(tx: Transaccion, id: string): Promise<Expediente> {
@@ -82,8 +105,6 @@ function datosPersistibles(expediente: DatosExpediente): DatosExpediente {
     categoria: expediente.categoria,
     estado: expediente.estado,
     abiertoEn: expediente.abiertoEn,
-    cerradoEn: expediente.cerradoEn,
-    motivoCierre: expediente.motivoCierre,
   }
 }
 
@@ -92,15 +113,13 @@ export function crearRepositorioExpedientes(db: BaseDeDatos) {
     return db.transaction(async (tx) => {
       const actual = await bloquearExpediente(tx, id)
       const cambio = operacion(actual, new Date())
-      await tx
-        .update(expedientes)
-        .set({
-          estado: cambio.expediente.estado,
-          cerradoEn: cambio.expediente.cerradoEn,
-          motivoCierre: cambio.expediente.motivoCierre,
-        })
-        .where(eq(expedientes.id, id))
-      await guardarEntradas(tx, cambio)
+      if (cambio.expediente.estado !== actual.estado) {
+        await tx
+          .update(expedientes)
+          .set({ estado: cambio.expediente.estado })
+          .where(eq(expedientes.id, id))
+      }
+      await guardarCambio(tx, cambio)
       return releer(tx, id)
     })
   }
@@ -138,7 +157,7 @@ export function crearRepositorioExpedientes(db: BaseDeDatos) {
         }
         const cambio = crearExpediente(datos, Number(fila.valor), new Date())
         await tx.insert(expedientes).values(datosPersistibles(cambio.expediente))
-        await guardarEntradas(tx, cambio)
+        await guardarCambio(tx, cambio)
         return releer(tx, cambio.expediente.id)
       })
     },
@@ -153,6 +172,10 @@ export function crearRepositorioExpedientes(db: BaseDeDatos) {
 
     async cerrar(id: string, datos: DatosCierre): Promise<Expediente> {
       return aplicar(id, (expediente, ahora) => cerrarExpediente(expediente, datos, ahora))
+    },
+
+    async reabrir(id: string, datos: DatosReapertura): Promise<Expediente> {
+      return aplicar(id, (expediente, ahora) => reabrirExpediente(expediente, datos, ahora))
     },
   }
 }

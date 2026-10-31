@@ -79,11 +79,24 @@ export const esquemaCierre = z.object(
   { error: mensajeObjeto },
 )
 
+export const esquemaReapertura = z.object(
+  {
+    motivo: textoObligatorio(
+      'El motivo de reapertura es obligatorio: explica por qué se reabre el expediente.',
+      'El motivo de reapertura',
+      500,
+    ),
+  },
+  { error: mensajeObjeto },
+)
+
 export type DatosApertura = z.output<typeof esquemaApertura>
 
 export type DatosActividad = z.output<typeof esquemaActividad>
 
 export type DatosCierre = z.output<typeof esquemaCierre>
+
+export type DatosReapertura = z.output<typeof esquemaReapertura>
 
 export function validar<T extends z.ZodType>(esquema: T, datos: unknown): z.output<T> {
   const resultado = esquema.safeParse(datos)
