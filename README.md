@@ -64,7 +64,7 @@ Los cierres se guardan en su propia tabla `cierres` (id, número de expediente, 
 - Los datos que se ingresen son ficticios y no se usan para dar asesoría real.
 - Para cerrar de nuevo un expediente reabierto basta con que exista al menos una actividad en el expediente; no tiene que ser posterior a la reapertura.
 
-### Responsabilidades de los integrantes
+### Integrantes
 
 | Integrantes |
 | --- |
