@@ -3,9 +3,11 @@ import { crearApp } from './app'
 import { entorno } from './config'
 import { cerrarConexion, db, verificarConexion } from './db/conexion'
 import { crearRepositorioExpedientes } from './repositorio/expedientes'
+import { crearRepositorioUsuarios } from './repositorio/usuarios'
 
 const app = crearApp({
   repositorio: crearRepositorioExpedientes(db),
+  usuarios: crearRepositorioUsuarios(db),
   verificarConexion,
 })
 

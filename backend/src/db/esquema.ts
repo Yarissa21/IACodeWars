@@ -37,6 +37,28 @@ export const historial = pgTable(
   (tabla) => [index('historial_expediente_fecha_idx').on(tabla.expedienteId, tabla.fecha)],
 )
 
+export const usuarios = pgTable('usuarios', {
+  id: serial('id').primaryKey(),
+  nombre: text('nombre').notNull(),
+  nombreNormalizado: text('nombre_normalizado').notNull().unique(),
+  hashContrasena: text('hash_contrasena').notNull(),
+  creadoEn: timestamp('creado_en', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+})
+
+export const sesiones = pgTable(
+  'sesiones',
+  {
+    id: serial('id').primaryKey(),
+    tokenHash: text('token_hash').notNull().unique(),
+    usuarioId: integer('usuario_id')
+      .notNull()
+      .references(() => usuarios.id, { onDelete: 'cascade' }),
+    expiraEn: timestamp('expira_en', { withTimezone: true, mode: 'date' }).notNull(),
+    creadaEn: timestamp('creada_en', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  },
+  (tabla) => [index('sesiones_usuario_idx').on(tabla.usuarioId)],
+)
+
 export const cierres = pgTable(
   'cierres',
   {

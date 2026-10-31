@@ -2,11 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 import { Layout } from './componentes/Layout'
+import { RutaProtegida, RutaPublica } from './componentes/RutasSesion'
 import { ErrorApi } from './lib/http'
 import { PaginaDetalle } from './paginas/PaginaDetalle'
+import { PaginaIngreso } from './paginas/PaginaIngreso'
 import { PaginaListado } from './paginas/PaginaListado'
 import { PaginaNoEncontrada } from './paginas/PaginaNoEncontrada'
 import { PaginaNuevoExpediente } from './paginas/PaginaNuevoExpediente'
+import { PaginaRegistro } from './paginas/PaginaRegistro'
 
 const clienteQuery = new QueryClient({
   defaultOptions: {
@@ -22,13 +25,25 @@ const clienteQuery = new QueryClient({
 
 const enrutador = createBrowserRouter([
   {
-    element: <Layout />,
+    element: <RutaPublica />,
     children: [
-      { index: true, element: <Navigate to="/expedientes" replace /> },
-      { path: 'expedientes', element: <PaginaListado /> },
-      { path: 'expedientes/nuevo', element: <PaginaNuevoExpediente /> },
-      { path: 'expedientes/:codigo', element: <PaginaDetalle /> },
-      { path: '*', element: <PaginaNoEncontrada /> },
+      { path: 'ingresar', element: <PaginaIngreso /> },
+      { path: 'registro', element: <PaginaRegistro /> },
+    ],
+  },
+  {
+    element: <RutaProtegida />,
+    children: [
+      {
+        element: <Layout />,
+        children: [
+          { index: true, element: <Navigate to="/expedientes" replace /> },
+          { path: 'expedientes', element: <PaginaListado /> },
+          { path: 'expedientes/nuevo', element: <PaginaNuevoExpediente /> },
+          { path: 'expedientes/:codigo', element: <PaginaDetalle /> },
+          { path: '*', element: <PaginaNoEncontrada /> },
+        ],
+      },
     ],
   },
 ])

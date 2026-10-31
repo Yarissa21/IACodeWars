@@ -15,7 +15,7 @@ import { useSesion } from '../store/sesion'
 import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '../tipos/expediente'
 
 export function PaginaNuevoExpediente() {
-  const responsableActivo = useSesion((estado) => estado.responsable)
+  const responsableActivo = useSesion((estado) => estado.usuario?.nombre ?? '')
   const abrir = useAbrirExpediente()
   const navegar = useNavigate()
   const {
@@ -81,7 +81,7 @@ export function PaginaNuevoExpediente() {
             id="responsable"
             etiqueta="Responsable"
             error={errors.responsable?.message}
-            ayuda="Se completa con el responsable activo si lo guardaste arriba."
+            ayuda="Se completa con tu nombre; cámbialo si el caso lo atiende otra persona."
           >
             <input
               id="responsable"

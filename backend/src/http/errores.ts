@@ -5,6 +5,7 @@ import { ErrorDominio, type TipoErrorDominio } from '../domain/errores'
 
 const ESTADOS_HTTP: Record<TipoErrorDominio, ContentfulStatusCode> = {
   validacion: 400,
+  no_autenticado: 401,
   no_encontrado: 404,
   regla_negocio: 409,
 }

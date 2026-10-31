@@ -1,14 +1,18 @@
 import { Hono } from 'hono'
 import { manejarError, manejarRutaInexistente } from './http/errores'
+import { crearRutasAuth } from './http/rutas-auth'
 import { crearRutasExpedientes } from './http/rutas-expedientes'
+import { requerirSesion } from './http/sesion'
 import type { RepositorioExpedientes } from './repositorio/expedientes'
+import type { RepositorioUsuarios } from './repositorio/usuarios'
 
 export interface DependenciasApp {
   repositorio: RepositorioExpedientes
+  usuarios: RepositorioUsuarios
   verificarConexion: () => Promise<void>
 }
 
-export function crearApp({ repositorio, verificarConexion }: DependenciasApp) {
+export function crearApp({ repositorio, usuarios, verificarConexion }: DependenciasApp) {
   const app = new Hono()
 
   app.get('/api/salud', async (c) => {
@@ -16,6 +20,10 @@ export function crearApp({ repositorio, verificarConexion }: DependenciasApp) {
     return c.json({ estado: 'ok', baseDeDatos: 'conectada' })
   })
 
+  app.route('/api/auth', crearRutasAuth(usuarios))
+
+  app.use('/api/expedientes', requerirSesion(usuarios))
+  app.use('/api/expedientes/*', requerirSesion(usuarios))
   app.route('/api/expedientes', crearRutasExpedientes(repositorio))
 
   app.onError(manejarError)

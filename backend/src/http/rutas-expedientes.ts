@@ -1,5 +1,4 @@
 import { Hono, type Context } from 'hono'
-import { ErrorDominio } from '../domain/errores'
 import {
   esquemaActividad,
   esquemaApertura,
@@ -9,14 +8,7 @@ import {
 } from '../domain/esquemas'
 import { buscarExpedientes, normalizarIdExpediente } from '../domain/expedientes'
 import type { RepositorioExpedientes } from '../repositorio/expedientes'
-
-async function leerCuerpo(c: Context): Promise<unknown> {
-  try {
-    return await c.req.json<unknown>()
-  } catch {
-    throw new ErrorDominio('validacion', 'El cuerpo de la solicitud debe ser un JSON válido.')
-  }
-}
+import { leerCuerpo } from './cuerpo'
 
 function leerCodigo(c: Context): string {
   return normalizarIdExpediente(c.req.param('codigo') ?? '')

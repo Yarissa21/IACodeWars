@@ -1,4 +1,5 @@
 import axios, { isAxiosError } from 'axios'
+import { useSesion } from '../store/sesion'
 
 export class ErrorApi extends Error {
   readonly estado: number | null
@@ -75,5 +76,12 @@ http.interceptors.request.use((configuracion) => {
 
 http.interceptors.response.use(
   (respuesta) => respuesta,
-  (error: unknown) => Promise.reject(convertirError(error)),
+  (error: unknown) => {
+    const convertido = convertirError(error)
+    const ruta = isAxiosError(error) ? (error.config?.url ?? '') : ''
+    if (convertido.estado === 401 && !ruta.startsWith('/auth/')) {
+      useSesion.getState().limpiarSesion()
+    }
+    return Promise.reject(convertido)
+  },
 )
