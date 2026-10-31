@@ -3,6 +3,8 @@ import { Toaster } from 'react-hot-toast'
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 import { Layout } from './componentes/Layout'
 import { ErrorApi } from './lib/http'
+import { PaginaDetalle } from './paginas/PaginaDetalle'
+import { PaginaListado } from './paginas/PaginaListado'
 import { PaginaNoEncontrada } from './paginas/PaginaNoEncontrada'
 import { PaginaNuevoExpediente } from './paginas/PaginaNuevoExpediente'
 
@@ -22,8 +24,10 @@ const enrutador = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { index: true, element: <Navigate to="/expedientes/nuevo" replace /> },
+      { index: true, element: <Navigate to="/expedientes" replace /> },
+      { path: 'expedientes', element: <PaginaListado /> },
       { path: 'expedientes/nuevo', element: <PaginaNuevoExpediente /> },
+      { path: 'expedientes/:codigo', element: <PaginaDetalle /> },
       { path: '*', element: <PaginaNoEncontrada /> },
     ],
   },

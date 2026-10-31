@@ -1,7 +1,10 @@
 import { NavLink, Outlet } from 'react-router'
 import { ResponsableActivo } from './ResponsableActivo'
 
-const ENLACES = [{ ruta: '/expedientes/nuevo', texto: 'Abrir expediente' }]
+const ENLACES = [
+  { ruta: '/expedientes', texto: 'Expedientes' },
+  { ruta: '/expedientes/nuevo', texto: 'Abrir expediente' },
+]
 
 function claseEnlace({ isActive }: { isActive: boolean }): string {
   return `rounded-md px-3 py-1.5 text-sm font-medium transition ${

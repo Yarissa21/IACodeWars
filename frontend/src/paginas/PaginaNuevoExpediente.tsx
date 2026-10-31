@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router'
 import { Boton } from '../componentes/Boton'
 import { Campo, estiloControl } from '../componentes/Campo'
 import {
@@ -16,6 +17,7 @@ import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '../tipos/expediente'
 export function PaginaNuevoExpediente() {
   const responsableActivo = useSesion((estado) => estado.responsable)
   const abrir = useAbrirExpediente()
+  const navegar = useNavigate()
   const {
     register,
     handleSubmit,
@@ -32,6 +34,7 @@ export function PaginaNuevoExpediente() {
       const expediente = await abrir.mutateAsync(datos)
       toast.success(`Expediente ${expediente.id} abierto correctamente.`)
       reset({ solicitante: '', descripcion: '', responsable: responsableActivo, categoria: '' })
+      void navegar(`/expedientes/${expediente.id}`)
     } catch (error) {
       const mensaje = mensajeDeError(error)
       setError('root.servidor', { message: mensaje })
