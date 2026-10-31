@@ -41,3 +41,8 @@ export async function cerrarExpediente(codigo: string, datos: DatosMotivo): Prom
   const { data } = await http.post<Expediente>(`${rutaExpediente(codigo)}/cierre`, datos)
   return data
 }
+
+export async function reabrirExpediente(codigo: string, datos: DatosMotivo): Promise<Expediente> {
+  const { data } = await http.post<Expediente>(`${rutaExpediente(codigo)}/reapertura`, datos)
+  return data
+}

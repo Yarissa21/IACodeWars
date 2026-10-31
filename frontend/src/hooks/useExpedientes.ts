@@ -5,6 +5,7 @@ import {
   listarExpedientes,
   obtenerExpediente,
   pasarASeguimiento,
+  reabrirExpediente,
   registrarActividad,
 } from '../api/expedientes'
 import type { DatosActividad, DatosMotivo, Expediente } from '../tipos/expediente'
@@ -30,36 +31,44 @@ export function useExpediente(codigo: string) {
   })
 }
 
-function useAlGuardar() {
+function useSincronizarCache() {
   const clienteQuery = useQueryClient()
-  return async (expediente: Expediente) => {
-    clienteQuery.setQueryData(clavesExpedientes.detalle(expediente.id), expediente)
-    await clienteQuery.invalidateQueries({ queryKey: clavesExpedientes.todas })
+  return {
+    onSuccess: async (expediente: Expediente) => {
+      clienteQuery.setQueryData(clavesExpedientes.detalle(expediente.id), expediente)
+      await clienteQuery.invalidateQueries({ queryKey: clavesExpedientes.todas })
+    },
+    onError: async () => {
+      await clienteQuery.invalidateQueries({ queryKey: clavesExpedientes.todas })
+    },
   }
 }
 
 export function useAbrirExpediente() {
-  const alGuardar = useAlGuardar()
-  return useMutation({ mutationFn: abrirExpediente, onSuccess: alGuardar })
+  return useMutation({ mutationFn: abrirExpediente, ...useSincronizarCache() })
 }
 
 export function useRegistrarActividad(codigo: string) {
-  const alGuardar = useAlGuardar()
   return useMutation({
     mutationFn: (datos: DatosActividad) => registrarActividad(codigo, datos),
-    onSuccess: alGuardar,
+    ...useSincronizarCache(),
   })
 }
 
 export function usePasarASeguimiento(codigo: string) {
-  const alGuardar = useAlGuardar()
-  return useMutation({ mutationFn: () => pasarASeguimiento(codigo), onSuccess: alGuardar })
+  return useMutation({ mutationFn: () => pasarASeguimiento(codigo), ...useSincronizarCache() })
 }
 
 export function useCerrarExpediente(codigo: string) {
-  const alGuardar = useAlGuardar()
   return useMutation({
     mutationFn: (datos: DatosMotivo) => cerrarExpediente(codigo, datos),
-    onSuccess: alGuardar,
+    ...useSincronizarCache(),
+  })
+}
+
+export function useReabrirExpediente(codigo: string) {
+  return useMutation({
+    mutationFn: (datos: DatosMotivo) => reabrirExpediente(codigo, datos),
+    ...useSincronizarCache(),
   })
 }

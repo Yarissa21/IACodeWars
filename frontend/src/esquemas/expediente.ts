@@ -61,6 +61,11 @@ export const esquemaCierre = esquemaMotivo(
   'El motivo de cierre',
 )
 
+export const esquemaReapertura = esquemaMotivo(
+  'Falta el motivo de reapertura: explica por qué se reabre; no puede quedar vacío ni con solo espacios.',
+  'El motivo de reapertura',
+)
+
 export type FormularioMotivo = z.input<typeof esquemaCierre>
 
 export type DatosFormularioMotivo = z.output<typeof esquemaCierre>

@@ -5,6 +5,7 @@ import { mensajeDeError } from '../lib/http'
 import type { Expediente } from '../tipos/expediente'
 import { Boton } from './Boton'
 import { FormularioCierre } from './FormularioCierre'
+import { FormularioReapertura } from './FormularioReapertura'
 
 function AccionesAbierto({ expediente }: { expediente: Expediente }) {
   const pasar = usePasarASeguimiento(expediente.id)
@@ -48,6 +49,33 @@ function AccionesEnSeguimiento({ expediente }: { expediente: Expediente }) {
   )
 }
 
+function AccionesCerrado({ expediente }: { expediente: Expediente }) {
+  const [mostrarReapertura, setMostrarReapertura] = useState(false)
+
+  return (
+    <div className="space-y-4">
+      <div role="status" className="rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-800">
+        <p className="font-medium">Este expediente está cerrado.</p>
+        <p className="mt-0.5 text-slate-700">
+          Solo se puede consultar y no admite actividades. Para continuar con el caso, reábrelo indicando
+          un motivo.
+        </p>
+      </div>
+      {mostrarReapertura ? (
+        <FormularioReapertura
+          expediente={expediente}
+          alCancelar={() => setMostrarReapertura(false)}
+          alReabrir={() => setMostrarReapertura(false)}
+        />
+      ) : (
+        <Boton onClick={() => setMostrarReapertura(true)} className="w-full">
+          Reabrir expediente
+        </Boton>
+      )}
+    </div>
+  )
+}
+
 export function AccionesEstado({ expediente }: { expediente: Expediente }) {
   switch (expediente.estado) {
     case 'abierto':
@@ -55,6 +83,6 @@ export function AccionesEstado({ expediente }: { expediente: Expediente }) {
     case 'en_seguimiento':
       return <AccionesEnSeguimiento expediente={expediente} />
     case 'cerrado':
-      return null
+      return <AccionesCerrado expediente={expediente} />
   }
 }

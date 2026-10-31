@@ -111,15 +111,13 @@ export function PaginaDetalle() {
         </div>
 
         <aside className="space-y-6">
+          <Tarjeta titulo="Estado">
+            <AccionesEstado key={expediente.estado} expediente={expediente} />
+          </Tarjeta>
           {expediente.estado === 'cerrado' ? null : (
-            <>
-              <Tarjeta titulo="Estado">
-                <AccionesEstado key={expediente.estado} expediente={expediente} />
-              </Tarjeta>
-              <Tarjeta titulo="Registrar actividad" descripcion="La fecha y la hora se guardan automáticamente.">
-                <FormularioActividad codigo={expediente.id} />
-              </Tarjeta>
-            </>
+            <Tarjeta titulo="Registrar actividad" descripcion="La fecha y la hora se guardan automáticamente.">
+              <FormularioActividad codigo={expediente.id} />
+            </Tarjeta>
           )}
         </aside>
       </div>
