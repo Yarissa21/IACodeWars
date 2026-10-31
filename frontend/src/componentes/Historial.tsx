@@ -15,8 +15,8 @@ const APARIENCIAS: Record<ClaseEntrada, Apariencia> = {
   apertura: {
     etiqueta: 'Apertura',
     icono: 'M12 5v14M5 12h14',
-    circulo: 'bg-teal-600 text-white',
-    chip: 'bg-teal-50 text-teal-800 ring-teal-600/20',
+    circulo: 'bg-marca-700 text-white',
+    chip: 'bg-marca-50 text-marca-800 ring-marca-600/20',
   },
   actividad: {
     etiqueta: 'Actividad',
@@ -79,9 +79,9 @@ function Entrada({ entrada, ultima }: { entrada: EntradaHistorial; ultima: boole
   const esTransicion = entrada.tipo === 'cambio_estado'
 
   return (
-    <li className="relative flex gap-4 pb-6 last:pb-0">
+    <li className="relative flex gap-4 pb-7 last:pb-0">
       {ultima ? null : (
-        <span aria-hidden="true" className="absolute bottom-0 left-4 top-9 -ml-px w-0.5 bg-slate-200" />
+        <span aria-hidden="true" className="absolute bottom-0 left-4 top-9 -ml-px w-px bg-slate-200" />
       )}
       <span
         className={`relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white ${apariencia.circulo}`}
@@ -89,13 +89,20 @@ function Entrada({ entrada, ultima }: { entrada: EntradaHistorial; ultima: boole
         <Icono trazo={apariencia.icono} />
       </span>
       <div className="min-w-0 flex-1 pt-0.5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <span
             className={`rounded-md px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${apariencia.chip}`}
           >
             {apariencia.etiqueta}
           </span>
-          <time dateTime={entrada.fecha} className="text-xs text-slate-500">
+          {entrada.autor ? (
+            <span className="text-sm text-slate-600">
+              por <span className="font-semibold text-slate-900">{entrada.autor}</span>
+            </span>
+          ) : (
+            <span className="text-sm italic text-slate-400">Autor no registrado</span>
+          )}
+          <time dateTime={entrada.fecha} className="text-xs text-slate-500 sm:ml-auto">
             {formatearFecha(entrada.fecha)} · {formatearHora(entrada.fecha)}
           </time>
         </div>
@@ -103,24 +110,24 @@ function Entrada({ entrada, ultima }: { entrada: EntradaHistorial; ultima: boole
         {esTransicion && entrada.estadoAnterior && entrada.estadoNuevo ? (
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-700">
             <BadgeEstado estado={entrada.estadoAnterior} />
-            <span aria-label="pasa a">→</span>
+            <span aria-label="pasa a" className="text-slate-400">
+              →
+            </span>
             <BadgeEstado estado={entrada.estadoNuevo} />
           </p>
         ) : (
-          <p className="mt-1.5 whitespace-pre-line break-words text-sm text-slate-800">
-            {entrada.descripcion}
-          </p>
+          <p className="mt-1.5 whitespace-pre-line break-words text-sm text-slate-800">{entrada.descripcion}</p>
         )}
 
         {entrada.tipoActividad ? (
-          <p className="mt-1 text-xs text-slate-600">
-            <span className="font-medium">Tipo:</span> {entrada.tipoActividad}
+          <p className="mt-1 text-xs text-slate-500">
+            <span className="font-medium text-slate-600">Tipo:</span> {entrada.tipoActividad}
           </p>
         ) : null}
 
         {entrada.motivo ? (
-          <p className="mt-1.5 break-words text-sm text-slate-700">
-            <span className="font-medium">Motivo:</span> {entrada.motivo}
+          <p className="mt-2 break-words rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <span className="font-medium text-slate-900">Motivo:</span> {entrada.motivo}
           </p>
         ) : null}
       </div>

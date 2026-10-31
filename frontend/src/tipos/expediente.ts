@@ -26,6 +26,7 @@ export interface EntradaHistorial {
   estadoAnterior: Estado | null
   estadoNuevo: Estado | null
   motivo: string | null
+  autor: string | null
   fecha: string
 }
 

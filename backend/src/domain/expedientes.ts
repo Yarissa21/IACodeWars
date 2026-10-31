@@ -9,6 +9,11 @@ import {
   type ResumenExpediente,
 } from './tipos'
 
+export interface ContextoAccion {
+  ahora: Date
+  autor: string
+}
+
 export function formatearIdExpediente(numero: number): string {
   return `EXP-${String(numero).padStart(4, '0')}`
 }
@@ -20,7 +25,7 @@ export function normalizarIdExpediente(id: string): string {
 function entradaCambioEstado(
   anterior: Estado,
   nuevo: Estado,
-  fecha: Date,
+  contexto: ContextoAccion,
   motivo: string | null,
   detalle?: string,
 ): NuevaEntradaHistorial {
@@ -32,7 +37,8 @@ function entradaCambioEstado(
     estadoAnterior: anterior,
     estadoNuevo: nuevo,
     motivo,
-    fecha,
+    autor: contexto.autor,
+    fecha: contexto.ahora,
   }
 }
 
@@ -54,7 +60,11 @@ function contarActividades(expediente: Expediente): number {
   return expediente.historial.filter((entrada) => entrada.tipo === 'actividad').length
 }
 
-export function crearExpediente(datos: DatosApertura, numero: number, ahora: Date): CambioExpediente {
+export function crearExpediente(
+  datos: DatosApertura,
+  numero: number,
+  contexto: ContextoAccion,
+): CambioExpediente {
   return {
     expediente: {
       id: formatearIdExpediente(numero),
@@ -64,7 +74,7 @@ export function crearExpediente(datos: DatosApertura, numero: number, ahora: Dat
       responsable: datos.responsable,
       categoria: datos.categoria,
       estado: 'abierto',
-      abiertoEn: ahora,
+      abiertoEn: contexto.ahora,
     },
     nuevasEntradas: [
       {
@@ -74,7 +84,8 @@ export function crearExpediente(datos: DatosApertura, numero: number, ahora: Dat
         estadoAnterior: null,
         estadoNuevo: 'abierto',
         motivo: null,
-        fecha: ahora,
+        autor: contexto.autor,
+        fecha: contexto.ahora,
       },
     ],
     nuevoCierre: null,
@@ -84,7 +95,7 @@ export function crearExpediente(datos: DatosApertura, numero: number, ahora: Dat
 export function agregarActividad(
   expediente: Expediente,
   datos: DatosActividad,
-  ahora: Date,
+  contexto: ContextoAccion,
 ): CambioExpediente {
   rechazarSiCerrado(expediente, 'no admite nuevas actividades. Reábrelo para registrar actividades.')
   return {
@@ -97,21 +108,22 @@ export function agregarActividad(
         estadoAnterior: null,
         estadoNuevo: null,
         motivo: null,
-        fecha: ahora,
+        autor: contexto.autor,
+        fecha: contexto.ahora,
       },
     ],
     nuevoCierre: null,
   }
 }
 
-export function pasarASeguimiento(expediente: Expediente, ahora: Date): CambioExpediente {
+export function pasarASeguimiento(expediente: Expediente, contexto: ContextoAccion): CambioExpediente {
   rechazarSiCerrado(expediente, 'la única acción permitida es reabrirlo.')
   if (expediente.estado !== 'abierto') {
     throw new ErrorDominio('regla_negocio', `El expediente ${expediente.id} ya está En seguimiento.`)
   }
   return {
     expediente: { ...expediente, estado: 'en_seguimiento' },
-    nuevasEntradas: [entradaCambioEstado('abierto', 'en_seguimiento', ahora, null)],
+    nuevasEntradas: [entradaCambioEstado('abierto', 'en_seguimiento', contexto, null)],
     nuevoCierre: null,
   }
 }
@@ -119,7 +131,7 @@ export function pasarASeguimiento(expediente: Expediente, ahora: Date): CambioEx
 export function cerrarExpediente(
   expediente: Expediente,
   datos: DatosCierre,
-  ahora: Date,
+  contexto: ContextoAccion,
 ): CambioExpediente {
   const motivo = exigirMotivo(
     datos.motivo,
@@ -140,15 +152,15 @@ export function cerrarExpediente(
   }
   return {
     expediente: { ...expediente, estado: 'cerrado' },
-    nuevasEntradas: [entradaCambioEstado('en_seguimiento', 'cerrado', ahora, motivo)],
-    nuevoCierre: { fecha: ahora, motivo },
+    nuevasEntradas: [entradaCambioEstado('en_seguimiento', 'cerrado', contexto, motivo)],
+    nuevoCierre: { fecha: contexto.ahora, motivo },
   }
 }
 
 export function reabrirExpediente(
   expediente: Expediente,
   datos: DatosReapertura,
-  ahora: Date,
+  contexto: ContextoAccion,
 ): CambioExpediente {
   const motivo = exigirMotivo(
     datos.motivo,
@@ -162,7 +174,7 @@ export function reabrirExpediente(
   }
   return {
     expediente: { ...expediente, estado: 'en_seguimiento' },
-    nuevasEntradas: [entradaCambioEstado('cerrado', 'en_seguimiento', ahora, motivo, 'Expediente reabierto.')],
+    nuevasEntradas: [entradaCambioEstado('cerrado', 'en_seguimiento', contexto, motivo, 'Expediente reabierto.')],
     nuevoCierre: null,
   }
 }

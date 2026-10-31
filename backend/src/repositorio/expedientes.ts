@@ -14,6 +14,7 @@ import {
   crearExpediente,
   pasarASeguimiento,
   reabrirExpediente,
+  type ContextoAccion,
 } from '../domain/expedientes'
 import type {
   CambioExpediente,
@@ -28,7 +29,7 @@ type Transaccion = Parameters<Parameters<BaseDeDatos['transaction']>[0]>[0]
 
 type Lector = Pick<BaseDeDatos, 'select'>
 
-type OperacionExpediente = (expediente: Expediente, ahora: Date) => CambioExpediente
+type OperacionExpediente = (expediente: Expediente, contexto: ContextoAccion) => CambioExpediente
 
 async function leerHistorial(lector: Lector, expedienteId: string): Promise<EntradaHistorial[]> {
   return lector
@@ -40,6 +41,7 @@ async function leerHistorial(lector: Lector, expedienteId: string): Promise<Entr
       estadoAnterior: historial.estadoAnterior,
       estadoNuevo: historial.estadoNuevo,
       motivo: historial.motivo,
+      autor: historial.autor,
       fecha: historial.fecha,
     })
     .from(historial)
@@ -109,10 +111,10 @@ function datosPersistibles(expediente: DatosExpediente): DatosExpediente {
 }
 
 export function crearRepositorioExpedientes(db: BaseDeDatos) {
-  async function aplicar(id: string, operacion: OperacionExpediente): Promise<Expediente> {
+  async function aplicar(id: string, autor: string, operacion: OperacionExpediente): Promise<Expediente> {
     return db.transaction(async (tx) => {
       const actual = await bloquearExpediente(tx, id)
-      const cambio = operacion(actual, new Date())
+      const cambio = operacion(actual, { ahora: new Date(), autor })
       if (cambio.expediente.estado !== actual.estado) {
         await tx
           .update(expedientes)
@@ -147,7 +149,7 @@ export function crearRepositorioExpedientes(db: BaseDeDatos) {
       return expediente
     },
 
-    async abrir(datos: DatosApertura): Promise<Expediente> {
+    async abrir(datos: DatosApertura, autor: string): Promise<Expediente> {
       return db.transaction(async (tx) => {
         const [fila] = await tx.execute<{ valor: string }>(
           sql`select nextval('expedientes_numero_seq') as valor`,
@@ -155,27 +157,27 @@ export function crearRepositorioExpedientes(db: BaseDeDatos) {
         if (!fila) {
           throw new Error('No se pudo generar el número del expediente.')
         }
-        const cambio = crearExpediente(datos, Number(fila.valor), new Date())
+        const cambio = crearExpediente(datos, Number(fila.valor), { ahora: new Date(), autor })
         await tx.insert(expedientes).values(datosPersistibles(cambio.expediente))
         await guardarCambio(tx, cambio)
         return releer(tx, cambio.expediente.id)
       })
     },
 
-    async registrarActividad(id: string, datos: DatosActividad): Promise<Expediente> {
-      return aplicar(id, (expediente, ahora) => agregarActividad(expediente, datos, ahora))
+    async registrarActividad(id: string, datos: DatosActividad, autor: string): Promise<Expediente> {
+      return aplicar(id, autor, (expediente, contexto) => agregarActividad(expediente, datos, contexto))
     },
 
-    async pasarASeguimiento(id: string): Promise<Expediente> {
-      return aplicar(id, (expediente, ahora) => pasarASeguimiento(expediente, ahora))
+    async pasarASeguimiento(id: string, autor: string): Promise<Expediente> {
+      return aplicar(id, autor, (expediente, contexto) => pasarASeguimiento(expediente, contexto))
     },
 
-    async cerrar(id: string, datos: DatosCierre): Promise<Expediente> {
-      return aplicar(id, (expediente, ahora) => cerrarExpediente(expediente, datos, ahora))
+    async cerrar(id: string, datos: DatosCierre, autor: string): Promise<Expediente> {
+      return aplicar(id, autor, (expediente, contexto) => cerrarExpediente(expediente, datos, contexto))
     },
 
-    async reabrir(id: string, datos: DatosReapertura): Promise<Expediente> {
-      return aplicar(id, (expediente, ahora) => reabrirExpediente(expediente, datos, ahora))
+    async reabrir(id: string, datos: DatosReapertura, autor: string): Promise<Expediente> {
+      return aplicar(id, autor, (expediente, contexto) => reabrirExpediente(expediente, datos, contexto))
     },
   }
 }

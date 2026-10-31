@@ -32,6 +32,7 @@ export const historial = pgTable(
     estadoAnterior: estadoExpediente('estado_anterior'),
     estadoNuevo: estadoExpediente('estado_nuevo'),
     motivo: text('motivo'),
+    autor: text('autor'),
     fecha: timestamp('fecha', { withTimezone: true, mode: 'date' }).notNull(),
   },
   (tabla) => [index('historial_expediente_fecha_idx').on(tabla.expedienteId, tabla.fecha)],
